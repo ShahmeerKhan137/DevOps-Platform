@@ -1,0 +1,12 @@
+name: Smart CI
+
+on:
+  workflow_call:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Testing Reusable Workflow
+        run: echo "Hello from Central Pipeline"
