@@ -4,9 +4,16 @@ on:
   workflow_call:
 
 jobs:
-  test:
+
+  checkout-test:
+
     runs-on: ubuntu-latest
 
     steps:
-      - name: Testing Reusable Workflow
-        run: echo "Hello from Central Pipeline"
+
+      - uses: actions/checkout@v4
+
+      - name: List Files
+        run: |
+          pwd
+          ls -la
