@@ -5,6 +5,7 @@ on:
 
 jobs:
 
+
   detect:
 
     runs-on: ubuntu-latest
@@ -14,14 +15,15 @@ jobs:
 
     steps:
 
-      - name: Checkout caller repository
+      - name: Checkout caller repo
         uses: actions/checkout@v4
 
-      - name: Verify files
-        run: ls -la
-
-      - id: detect
+      - name: Detect project type
+        id: detect
         run: |
+
+          echo "Scanning repository files..."
+          ls -la
 
           if [ -f pom.xml ]; then
             echo "stack=java-maven" >> $GITHUB_OUTPUT
@@ -33,9 +35,61 @@ jobs:
             echo "stack=node" >> $GITHUB_OUTPUT
 
           else
-            echo "ERROR: No known project found"
+            echo "ERROR: Unknown Stack"
             exit 1
           fi
 
       - name: Show detected stack
-        run: echo "STACK = ${{ steps.detect.outputs.stack }}"
+        run: echo "Detected Stack = ${{ steps.detect.outputs.stack }}"
+
+
+  build:
+
+    needs: detect
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout caller repo
+        uses: actions/checkout@v4
+
+
+      - name: Setup Java (Maven)
+        if: needs.detect.outputs.stack == 'java-maven'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: maven
+
+      - name: Build Maven
+        if: needs.detect.outputs.stack == 'java-maven'
+        run: mvn clean package -DskipTests
+
+
+      - name: Setup Java (Gradle)
+        if: needs.detect.outputs.stack == 'java-gradle'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Build Gradle
+        if: needs.detect.outputs.stack == 'java-gradle'
+        run: |
+          chmod +x gradlew
+          ./gradlew build -x test
+
+
+      - name: Setup Node
+        if: needs.detect.outputs.stack == 'node'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Build Node
+        if: needs.detect.outputs.stack == 'node'
+        run: |
+          npm ci
+          npm run build
