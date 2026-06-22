@@ -5,15 +5,32 @@ on:
 
 jobs:
 
-  checkout-test:
+  detect:
 
     runs-on: ubuntu-latest
+
+    outputs:
+      stack: ${{ steps.detect.outputs.stack }}
 
     steps:
 
       - uses: actions/checkout@v4
 
-      - name: List Files
+      - id: detect
         run: |
-          pwd
-          ls -la
+
+          if [ -f pom.xml ]; then
+            echo "stack=java-maven" >> $GITHUB_OUTPUT
+
+          elif [ -f build.gradle ]; then
+            echo "stack=java-gradle" >> $GITHUB_OUTPUT
+
+          elif [ -f package.json ]; then
+            echo "stack=node" >> $GITHUB_OUTPUT
+
+          else
+            echo "Unknown Stack"
+            exit 1
+          fi
+
+      - run: echo "${{ steps.detect.outputs.stack }}"
