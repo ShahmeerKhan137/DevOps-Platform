@@ -14,7 +14,11 @@ jobs:
 
     steps:
 
-      - uses: actions/checkout@v4
+      - name: Checkout caller repository
+        uses: actions/checkout@v4
+
+      - name: Verify files
+        run: ls -la
 
       - id: detect
         run: |
@@ -22,15 +26,16 @@ jobs:
           if [ -f pom.xml ]; then
             echo "stack=java-maven" >> $GITHUB_OUTPUT
 
-          elif [ -f build.gradle ]; then
+          elif [ -f build.gradle ] || [ -f build.gradle.kts ]; then
             echo "stack=java-gradle" >> $GITHUB_OUTPUT
 
           elif [ -f package.json ]; then
             echo "stack=node" >> $GITHUB_OUTPUT
 
           else
-            echo "Unknown Stack"
+            echo "ERROR: No known project found"
             exit 1
           fi
 
-      - run: echo "${{ steps.detect.outputs.stack }}"
+      - name: Show detected stack
+        run: echo "STACK = ${{ steps.detect.outputs.stack }}"
