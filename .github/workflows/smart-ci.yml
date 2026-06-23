@@ -5,9 +5,7 @@ on:
 
 jobs:
 
-# =========================
-# 1. DETECT
-# =========================
+
   detect:
 
     runs-on: ubuntu-latest
@@ -44,9 +42,7 @@ jobs:
       - name: Show detected stack
         run: echo "Detected Stack = ${{ steps.detect.outputs.stack }}"
 
-# =========================
-# 2. BUILD
-# =========================
+
   build:
 
     needs: detect
@@ -57,7 +53,6 @@ jobs:
       - name: Checkout caller repo
         uses: actions/checkout@v4
 
-      # -------- MAVEN --------
       - name: Setup Java (Maven)
         if: needs.detect.outputs.stack == 'java-maven'
         uses: actions/setup-java@v4
@@ -77,7 +72,6 @@ jobs:
           name: app-jar
           path: target/*.jar
 
-      # -------- GRADLE --------
       - name: Setup Java (Gradle)
         if: needs.detect.outputs.stack == 'java-gradle'
         uses: actions/setup-java@v4
@@ -98,7 +92,6 @@ jobs:
           name: app-jar
           path: build/libs/*.jar
 
-      # -------- NODE --------
       - name: Setup Node
         if: needs.detect.outputs.stack == 'node'
         uses: actions/setup-node@v4
@@ -112,9 +105,6 @@ jobs:
           npm ci
           npm run build
 
-# =========================
-# 3. DOCKER
-# =========================
   docker:
 
     needs:
@@ -155,9 +145,6 @@ jobs:
             ${{ secrets.DOCKER_USERNAME }}/${{ steps.repo.outputs.repo_name }}:latest
             ${{ secrets.DOCKER_USERNAME }}/${{ steps.repo.outputs.repo_name }}:${{ github.sha }}
 
-# =========================
-# 4. CLEANUP
-# =========================
   cleanup:
 
     needs:
