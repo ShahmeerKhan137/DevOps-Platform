@@ -5,7 +5,6 @@ on:
 
 jobs:
 
-
   detect:
 
     runs-on: ubuntu-latest
@@ -42,7 +41,6 @@ jobs:
       - name: Show detected stack
         run: echo "Detected Stack = ${{ steps.detect.outputs.stack }}"
 
-
   build:
 
     needs: detect
@@ -53,7 +51,7 @@ jobs:
       - name: Checkout caller repo
         uses: actions/checkout@v4
 
-
+      # Maven
       - name: Setup Java (Maven)
         if: needs.detect.outputs.stack == 'java-maven'
         uses: actions/setup-java@v4
@@ -66,7 +64,7 @@ jobs:
         if: needs.detect.outputs.stack == 'java-maven'
         run: mvn clean package -DskipTests
 
-
+      # Gradle
       - name: Setup Java (Gradle)
         if: needs.detect.outputs.stack == 'java-gradle'
         uses: actions/setup-java@v4
@@ -80,7 +78,7 @@ jobs:
           chmod +x gradlew
           ./gradlew build -x test
 
-
+      # Node
       - name: Setup Node
         if: needs.detect.outputs.stack == 'node'
         uses: actions/setup-node@v4
@@ -93,3 +91,56 @@ jobs:
         run: |
           npm ci
           npm run build
+
+  docker:
+
+    needs:
+      - detect
+      - build
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout caller repo
+        uses: actions/checkout@v4
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.ACCESS_TOKEN }}
+
+      - name: Extract repository name
+        id: repo
+        run: |
+          REPO_NAME=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
+          echo "repo_name=$REPO_NAME" >> $GITHUB_OUTPUT
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/${{ steps.repo.outputs.repo_name }}:latest
+            ${{ secrets.DOCKER_USERNAME }}/${{ steps.repo.outputs.repo_name }}:${{ github.sha }}
+
+  cleanup:
+
+    needs:
+      - detect
+      - build
+      - docker
+
+    if: always()
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Cleanup Workspace
+        run: |
+          echo "Cleaning workspace..."
+          rm -rf ./*
+          echo "Cleanup completed."
