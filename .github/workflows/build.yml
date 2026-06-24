@@ -1,0 +1,70 @@
+name: Build
+
+on:
+  workflow_call:
+    inputs:
+      stack:
+        required: true
+        type: string
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - uses: actions/checkout@v4
+
+      - name: Setup Java Maven
+        if: inputs.stack == 'java-maven'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: maven
+
+      - name: Build Maven
+        if: inputs.stack == 'java-maven'
+        run: mvn clean package -DskipTests
+
+      - name: Upload Maven Artifact
+        if: inputs.stack == 'java-maven'
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-jar
+          path: target/*.jar
+
+      - name: Setup Java Gradle
+        if: inputs.stack == 'java-gradle'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Build Gradle
+        if: inputs.stack == 'java-gradle'
+        run: |
+          chmod +x gradlew
+          ./gradlew build -x test
+
+      - name: Upload Gradle Artifact
+        if: inputs.stack == 'java-gradle'
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-jar
+          path: build/libs/*.jar
+
+      - name: Setup Node
+        if: inputs.stack == 'node'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Build Node
+        if: inputs.stack == 'node'
+        run: |
+          npm ci
+          npm run build
