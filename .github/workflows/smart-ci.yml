@@ -1,4 +1,4 @@
-name: "Smart Centralized CI Orchesrator"
+name: "Smart Centralized CI Orchestrator"
 
 on:
   workflow_call:
@@ -16,25 +16,20 @@ jobs:
       contents: read
       packages: write
     steps:
-      # 1. Checkout using the shared composite action
       - name: Checkout Code
-        uses: your-org/devops-platform/.github/actions/checkout@main
+        uses: ShahmeerKhan137/DevOps-Platform/.github/actions/checkout@main
 
-      # 2. Automatically detect stack
       - name: Detect Technology Stack
         id: detect
-        uses: your-org/devops-platform/.github/actions/detect-stack@main
+        uses: ShahmeerKhan137/DevOps-Platform/.github/actions/detect-stack@main
 
-      # 3. Build based on detected stack
       - name: Build Application
-        uses: your-org/devops-platform/.github/actions/build@main
+        uses: ShahmeerKhan137/DevOps-Platform/.github/actions/build@main
         with:
           stack: ${{ steps.detect.outputs.stack }}
 
-      # 4. Conditionally build & publish image to GHCR
       - name: Publish Docker Image
         if: ${{ inputs.enable_publish == true }}
-        uses: your-org/devops-platform/.github/actions/docker-publish@main
+        uses: ShahmeerKhan137/DevOps-Platform/.github/actions/docker-publish@main
         with:
-          # Converts repository name to lowercase safely to meet docker naming conventions
           image_name: ${{ github.repository }}
