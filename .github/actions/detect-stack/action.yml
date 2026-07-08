@@ -1,0 +1,30 @@
+name: 'Detect Application Stack'
+description: 'Automatically determines the project type based on repository files'
+outputs:
+  stack:
+    description: 'The detected technology stack (maven, gradle, node, python, or unknown)'
+    value: ${{ steps.detector.outputs.stack }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Scan Files for Stack Detection
+      id: detector
+      shell: bash
+      run: |
+        if [ -f "pom.xml" ]; then
+          echo "stack=maven" >> $GITHUB_OUTPUT
+          echo "Detected Tech Stack: Maven"
+        elif [ -f "build.gradle" ] || [ -f "build.gradle.kts" ]; then
+          echo "stack=gradle" >> $GITHUB_OUTPUT
+          echo "Detected Tech Stack: Gradle"
+        elif [ -f "package.json" ]; then
+          echo "stack=node" >> $GITHUB_OUTPUT
+          echo "Detected Tech Stack: Node.js"
+        elif [ -f "requirements.txt" ] || [ -f "setup.py" ] || [ -f "pyproject.toml" ]; then
+          echo "stack=python" >> $GITHUB_OUTPUT
+          echo "Detected Tech Stack: Python"
+        else
+          echo "stack=unknown" >> $GITHUB_OUTPUT
+          echo "Warning: No recognizable stack found."
+        fi

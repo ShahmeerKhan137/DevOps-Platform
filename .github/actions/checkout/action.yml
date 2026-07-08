@@ -1,0 +1,8 @@
+name: 'Centralized Checkout'
+description: 'Clones the calling application repository'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
