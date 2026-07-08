@@ -3,8 +3,23 @@ name: "Smart Centralized CI Orchestrator"
 on:
   workflow_call:
     inputs:
+      enable_checkout:
+        description: 'Toggle Checkout stage'
+        required: false
+        type: boolean
+        default: true
+      enable_detection:
+        description: 'Toggle Stack Detection stage'
+        required: false
+        type: boolean
+        default: true
+      enable_build:
+        description: 'Toggle Build stage'
+        required: false
+        type: boolean
+        default: true
       enable_publish:
-        description: 'Toggle to enable or disable the Docker publish stage'
+        description: 'Toggle Docker Publish stage'
         required: false
         type: boolean
         default: true
@@ -16,18 +31,25 @@ jobs:
       contents: read
       packages: write
     steps:
+      # 1. Checkout Stage
       - name: Checkout Code
+        if: ${{ inputs.enable_checkout == true }}
         uses: ShahmeerKhan137/DevOps-Platform/.github/actions/checkout@main
 
+      # 2. Detect Stack Stage
       - name: Detect Technology Stack
+        if: ${{ inputs.enable_detection == true }}
         id: detect
         uses: ShahmeerKhan137/DevOps-Platform/.github/actions/detect-stack@main
 
+      # 3. Build Stage
       - name: Build Application
+        if: ${{ inputs.enable_build == true && (inputs.enable_detection == true || steps.detect.outputs.stack != '') }}
         uses: ShahmeerKhan137/DevOps-Platform/.github/actions/build@main
         with:
-          stack: ${{ steps.detect.outputs.stack }}
+          stack: ${{ steps.detect.outputs.stack || 'maven' }}
 
+      # 4. Docker Publish Stage
       - name: Publish Docker Image
         if: ${{ inputs.enable_publish == true }}
         uses: ShahmeerKhan137/DevOps-Platform/.github/actions/docker-publish@main
